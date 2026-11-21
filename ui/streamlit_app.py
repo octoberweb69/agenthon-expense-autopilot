@@ -93,11 +93,13 @@ with side_col:
                       help="Non rimborsabili (alcolici, multe, doppioni, fuori termine) "
                            "+ eccedenze sui limiti di pasti e hotel")
 
-    tab_note, tab_appr, tab_bozze, tab_log = st.tabs([
-        "📋 Note spese", f"🛑 Approvazioni ({len(attesa)})", f"✉️ Bozze ({len(bozze)})",
-        f"📜 Registro ({len(registro)})"])
+    # Selettore con memoria (le st.tabs tornano alla prima scheda a ogni rerun, es. dopo un'approvazione)
+    etichette = {"note": "📋 Note spese", "appr": f"🛑 Approvazioni ({len(attesa)})",
+                 "bozze": f"✉️ Bozze ({len(bozze)})", "log": f"📜 Registro ({len(registro)})"}
+    sezione = st.segmented_control("Sezione", list(etichette), format_func=etichette.get,
+                                   default="note", key="sezione", label_visibility="collapsed") or "note"
 
-    with tab_note:
+    if sezione == "note":
         if note:
             st.dataframe(
                 [{"Nota": n["nota_id"], "Stato": stato_nota(n), "Dipendente": n["dipendente"],
@@ -124,7 +126,7 @@ with side_col:
             if d["regole_nota"]:
                 st.info(f"R10: totale {d['totale']:.2f} € sopra soglia, serve l'approvazione di {d['approvatore']}")
 
-    with tab_appr:
+    if sezione == "appr":
         if not attesa:
             st.caption("Nessuna richiesta in attesa. Chiedi all'agente di processare le note.")
         persone = [p["nome"] for p in get("/people", [])]
@@ -162,7 +164,7 @@ with side_col:
                             st.toast(f"⛔ {r.json().get('detail')}")
                         st.rerun()
 
-    with tab_bozze:
+    if sezione == "bozze":
         if not bozze:
             st.caption("Nessuna bozza.")
         for b in reversed(bozze):
@@ -170,7 +172,7 @@ with side_col:
                 st.text(b.get("body", ""))
                 st.caption("Bozza: non inviata.")
 
-    with tab_log:
+    if sezione == "log":
         if not registro:
             st.caption("Registro vuoto.")
         for e in reversed(registro):
