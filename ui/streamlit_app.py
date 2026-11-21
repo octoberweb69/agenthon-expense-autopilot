@@ -100,18 +100,23 @@ with side_col:
                                    default="note", key="sezione", label_visibility="collapsed") or "note"
 
     if sezione == "note":
+        scelta = None
         if note:
-            st.dataframe(
+            # Clic su una riga = dettaglio della nota subito sotto
+            ev = st.dataframe(
                 [{"Nota": n["nota_id"], "Stato": stato_nota(n), "Dipendente": n["dipendente"],
                   "Totale €": n["totale"]} for n in note],
                 hide_index=True, width="stretch", height=(len(note) + 1) * 35 + 3,
+                on_select="rerun", selection_mode="single-row", key="tabella_note",
                 column_config={
                     "Nota": st.column_config.TextColumn(width="small"),
                     "Stato": st.column_config.TextColumn(width="medium"),
                     "Dipendente": st.column_config.TextColumn(width="medium"),
                     "Totale €": st.column_config.NumberColumn(format="%.2f", width="small")})
-        scelta = st.selectbox("Dettaglio controlli", [n["nota_id"] for n in note], index=None,
-                              placeholder="Scegli una nota…")
+            righe = ev.selection.rows if ev and ev.selection else []
+            scelta = note[righe[0]]["nota_id"] if righe else None
+            if not scelta:
+                st.caption("👆 Clicca una nota per vedere i controlli spesa per spesa.")
         if scelta:
             d = get(f"/notes/{scelta}", {})
             st.markdown(f"**{d['titolo']}** · {d['dipendente']} · approvatore: {d['approvatore']}")
