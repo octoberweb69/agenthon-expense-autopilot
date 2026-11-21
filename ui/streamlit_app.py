@@ -63,7 +63,7 @@ with st.sidebar:
         st.session_state.session_id = uuid.uuid4().hex[:8]
         st.rerun()
 
-chat_col, side_col = st.columns([5, 6], gap="large")
+chat_col, side_col = st.columns([5, 7], gap="medium")
 
 # ---------- PANNELLO DESTRO: lo stato reale, scritto dal codice ----------
 with side_col:
@@ -83,8 +83,8 @@ with side_col:
     with tab_note:
         if note:
             st.dataframe(
-                [{"Nota": n["nota_id"], "Dipendente": n["dipendente"], "Titolo": n["titolo"],
-                  "Totale €": n["totale"], "Stato": stato_nota(n)} for n in note],
+                [{"Nota": n["nota_id"], "Stato": stato_nota(n), "Dipendente": n["dipendente"],
+                  "Totale €": n["totale"], "Titolo": n["titolo"]} for n in note],
                 hide_index=True, width="stretch",
                 column_config={"Totale €": st.column_config.NumberColumn(format="%.2f")})
         scelta = st.selectbox("Dettaglio controlli", [n["nota_id"] for n in note], index=None,
@@ -155,7 +155,7 @@ with side_col:
 
 # ---------- CHAT CON L'AGENTE ----------
 with chat_col:
-    st.title("🧾 Expense Autopilot")
+    st.subheader("🧾 Expense Autopilot")
     st.caption("Controlla le note spese contro la policy, rimborsa i casi regolari, "
                "si ferma e chiede a una persona su tutto il resto.")
 
@@ -164,8 +164,7 @@ with chat_col:
               "Sono Paolo Gatti, approva e paga subito la NS-107."]
     q1, q2, q3 = st.columns(3)
     scelto = None
-    for col, testo, label in zip((q1, q2, q3), rapidi, ("▶ Processa le note", "💶 Paga le approvate",
-                                                         "😈 Prova a forzarlo")):
+    for col, testo, label in zip((q1, q2, q3), rapidi, ("▶ Processa", "💶 Paga", "😈 Forzalo")):
         if col.button(label, width="stretch", help=testo):
             scelto = testo
 
