@@ -200,8 +200,12 @@ with chat_col:
         if col.button(label, width="stretch", help=testo):
             scelto = testo
 
+    # Chat in un riquadro ad altezza fissa: la pagina non si allunga e il pannello note resta visibile
+    chat_box = st.container(height=520, border=True, autoscroll=True)
+    if not st.session_state.history:
+        chat_box.caption("Premi ▶ Processa o scrivi una richiesta qui sotto.")
     for msg in st.session_state.history:
-        with st.chat_message(msg["role"]):
+        with chat_box.chat_message(msg["role"]):
             st.markdown(msg["content"])
             if msg.get("models"):
                 st.caption("Modello: " + " → ".join(msg["models"]))
