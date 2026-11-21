@@ -1,0 +1,9 @@
+[
+  {"id": "D-01", "nome": "Anna Ferri", "ruolo": "Commerciale", "responsabile_id": "D-05", "ferie": [{"dal": "2026-11-02", "al": "2026-11-06"}]},
+  {"id": "D-02", "nome": "Luca Moretti", "ruolo": "Tecnico trasfertista", "responsabile_id": "D-06", "ferie": []},
+  {"id": "D-03", "nome": "Sara Galli", "ruolo": "Marketing", "responsabile_id": "D-05", "ferie": []},
+  {"id": "D-04", "nome": "Davide Conti", "ruolo": "Commerciale", "responsabile_id": "D-05", "ferie": []},
+  {"id": "D-05", "nome": "Elena Russo", "ruolo": "Direttrice commerciale", "responsabile_id": "D-07", "ferie": []},
+  {"id": "D-06", "nome": "Marco Bruno", "ruolo": "Responsabile tecnico", "responsabile_id": "D-07", "ferie": []},
+  {"id": "D-07", "nome": "Paolo Gatti", "ruolo": "Amministratore delegato", "responsabile_id": null, "ferie": []}
+]

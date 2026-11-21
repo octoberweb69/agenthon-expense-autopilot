@@ -1,0 +1,12 @@
+[
+  {"id": "R1", "titolo": "Limite pasti", "regola": "Pasti: massimo 30 € a persona; con un cliente massimo 50 € a persona, indicando il nome del cliente.", "categoria": "pasto", "max_persona": 30.0, "max_persona_cliente": 50.0},
+  {"id": "R2", "titolo": "Limite hotel", "regola": "Hotel: massimo 120 € a notte.", "categoria": "hotel", "max_notte": 120.0},
+  {"id": "R3", "titolo": "Taxi", "regola": "Taxi ammesso solo dopo le 22 o se non ci sono mezzi pubblici; altrimenti serve una motivazione.", "categoria": "taxi", "ora_libera_da": "22:00"},
+  {"id": "R4", "titolo": "Rimborso chilometrico", "regola": "Auto propria: 0,40 €/km, con partenza e arrivo indicati.", "categoria": "km", "euro_km": 0.40},
+  {"id": "R5", "titolo": "Ricevuta obbligatoria", "regola": "Ricevuta obbligatoria per ogni spesa sopra i 25 €.", "soglia": 25.0},
+  {"id": "R6", "titolo": "Spese non ammesse", "regola": "Non si rimborsano alcolici, multe e spese personali.", "categorie_vietate": ["multa", "personale"], "parole_vietate": ["vino", "birra", "alcol", "liquore", "spritz", "amaro"]},
+  {"id": "R7", "titolo": "Termine di presentazione", "regola": "Le spese vanno presentate entro 60 giorni dalla data della spesa.", "giorni_max": 60},
+  {"id": "R8", "titolo": "Spesa doppia", "regola": "Stessa persona, stesso importo, stessa data e stessa categoria: possibile doppione, va bloccata."},
+  {"id": "R9", "titolo": "Weekend e ferie", "regola": "Spese nel weekend o durante le ferie del dipendente: bloccate finché il dipendente non dà una motivazione."},
+  {"id": "R10", "titolo": "Note spese elevate", "regola": "Una nota spese sopra i 500 € in totale richiede sempre l'approvazione del responsabile, anche se è tutto regolare.", "soglia_nota": 500.0}
+]

@@ -12,6 +12,7 @@ import uuid
 from datetime import datetime
 
 from app.config import DATA_DIR, OUTBOX
+from app.expenses import check_expense_report
 
 
 def _load(name: str) -> list[dict]:
@@ -114,4 +115,5 @@ def request_human_approval(action: str, reason: str) -> dict:
     return {"status": "pending", "approval": rec}
 
 
-ALL_TOOLS = [list_datasets, search_records, get_record, create_ticket, draft_email, request_human_approval]
+ALL_TOOLS = [list_datasets, search_records, get_record, check_expense_report,
+             create_ticket, draft_email, request_human_approval]

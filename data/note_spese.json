@@ -1,0 +1,9 @@
+[
+  {"id": "NS-101", "dipendente_id": "D-01", "titolo": "Trasferta Milano, visita cliente Rossi Impianti", "presentata_il": "2026-11-12", "stato": "da_verificare"},
+  {"id": "NS-102", "dipendente_id": "D-02", "titolo": "Intervento tecnico Genova", "presentata_il": "2026-11-09", "stato": "da_verificare"},
+  {"id": "NS-103", "dipendente_id": "D-03", "titolo": "Fiera di Bologna", "presentata_il": "2026-11-16", "stato": "da_verificare"},
+  {"id": "NS-104", "dipendente_id": "D-04", "titolo": "Spese commerciali novembre", "presentata_il": "2026-11-17", "stato": "da_verificare"},
+  {"id": "NS-105", "dipendente_id": "D-01", "titolo": "Spese varie", "presentata_il": "2026-11-19", "stato": "da_verificare"},
+  {"id": "NS-106", "dipendente_id": "D-05", "titolo": "Trasferta Roma, incontri con distributori", "presentata_il": "2026-11-19", "stato": "da_verificare"},
+  {"id": "NS-107", "dipendente_id": "D-06", "titolo": "Cena di fine progetto", "presentata_il": "2026-11-20", "stato": "da_verificare"}
+]
