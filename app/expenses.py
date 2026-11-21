@@ -17,6 +17,15 @@ REGISTRO = DATA_DIR / "registro.jsonl"
 _SOSPETTO = re.compile(r"ignora|approvat[ao]|rimbors[ai] subito|senza controlli|nota per il sistema", re.I)
 
 
+# Anomalie che il dipendente può sanare fornendo qualcosa: vanno chieste a lui.
+# Le altre (limiti, vietate, doppioni, termini) le decide il responsabile.
+_DA_CHIEDERE = {
+    "R3": "la motivazione del taxi del {data_it} ({importo_it})",
+    "R5": "la ricevuta della spesa del {data_it} ({importo_it}, {descrizione})",
+    "R9": "la motivazione della spesa del {data_it} ({importo_it}), fatta nel weekend o in ferie",
+}
+
+
 def _load(name: str) -> list[dict]:
     path = DATA_DIR / f"{name}.json"
     return json.loads(path.read_text(encoding="utf-8")) if path.exists() else []
@@ -143,10 +152,16 @@ def check_expense_report(nota_id: str) -> dict:
 
     return {
         "status": "ok", "nota_id": nota_id, "titolo": nota["titolo"],
-        "dipendente": dip.get("nome"), "approvatore": resp.get("nome"),
+        "dipendente": dip.get("nome"), "email_dipendente": dip.get("email"), "approvatore": resp.get("nome"),
         "totale": totale, "esito": esito, "regole_nota": regole_nota,
         "regole": {k: v["regola"] for k, v in p.items()},
         "spese": righe,
+        "da_chiedere_al_dipendente": [
+            {"spesa": r["id"], "regola": v["regola"],
+             "cosa": _DA_CHIEDERE[v["regola"]].format(
+                 data_it=date.fromisoformat(r["data"]).strftime("%d/%m/%Y"),
+                 importo_it=_eur(float(r["importo"])), descrizione=r["descrizione"])}
+            for r in righe for v in r["violazioni"] if v["regola"] in _DA_CHIEDERE],
     }
 
 

@@ -82,3 +82,23 @@ def test_panoramica_di_tutte_le_note():
                      "NS-107": "bloccata"}
     ns106 = next(n for n in r["note"] if n["nota_id"] == "NS-106")
     assert ns106["dipendente"] == "Elena Russo" and ns106["totale"] == pytest.approx(585.0)
+
+
+def test_indica_cosa_chiedere_al_dipendente():
+    r = check_expense_report("NS-103")  # taxi alle 15 senza motivazione (R3)
+    assert r["email_dipendente"] == "sara.galli@azienda.example"
+    assert [(x["spesa"], x["regola"]) for x in r["da_chiedere_al_dipendente"]] == [("S-12", "R3")]
+    assert "motivazione" in r["da_chiedere_al_dipendente"][0]["cosa"]
+
+
+def test_ricevuta_mancante_e_ferie_si_chiedono_al_dipendente():
+    assert [(x["spesa"], x["regola"]) for x in check_expense_report("NS-104")["da_chiedere_al_dipendente"]] == [
+        ("S-13", "R9"), ("S-17", "R5")]
+    assert [(x["spesa"], x["regola"]) for x in check_expense_report("NS-105")["da_chiedere_al_dipendente"]] == [
+        ("S-18", "R9")]
+
+
+def test_violazioni_non_sanabili_non_si_chiedono():
+    # limiti superati, vino, multe, doppioni, termini scaduti: decide il responsabile, non serve chiedere
+    assert check_expense_report("NS-102")["da_chiedere_al_dipendente"] == []
+    assert check_expense_report("NS-107")["da_chiedere_al_dipendente"] == []
