@@ -255,3 +255,18 @@ def pay_reimbursement(nota_id: str) -> dict:
     pagamento = {"importo": report["totale"], "beneficiario": report["dipendente"], "approvato_da": approvato_da}
     _log("rimborso_pagato", nota_id, "agente", **pagamento)
     return {"status": "ok", "nota_id": nota_id, "pagamento": pagamento}
+
+
+def list_expense_reports() -> dict:
+    """Panoramica di tutte le note spese: per ognuna dipendente, totale, esito dei controlli,
+    stato dell'approvazione e se è già stata pagata. Usala come primo passo per sapere cosa c'è da fare."""
+    note = []
+    for n in _load("note_spese"):
+        r = check_expense_report(n["id"])
+        stato, _ = _stato_approvazione(n["id"])
+        note.append({"nota_id": n["id"], "titolo": r["titolo"], "dipendente": r["dipendente"],
+                     "approvatore": r["approvatore"], "totale": r["totale"], "esito": r["esito"],
+                     "anomalie": sum(1 for s in r["spese"] if s["violazioni"]),
+                     "approvazione": stato or None,
+                     "pagata": any(e["tipo"] == "rimborso_pagato" for e in read_log(n["id"]))})
+    return {"status": "ok", "note": note}

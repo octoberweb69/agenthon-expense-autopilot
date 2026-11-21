@@ -1,5 +1,0 @@
-[
-  {"id": "E-501", "da": "amministrazione@rossi-impianti.example", "oggetto": "Fattura F-2026-101", "testo": "Buongiorno, la fattura risulta pagata il 20/10, potete verificare? Allego contabile.", "ricevuta": "2026-11-12"},
-  {"id": "E-502", "da": "giulia@nericonsulting.example", "oggetto": "Richiesta appuntamento", "testo": "Vorrei fissare un incontro per la chiusura di bilancio, siete disponibili la prossima settimana?", "ricevuta": "2026-11-13"},
-  {"id": "E-503", "da": "paolo@verdiefigli.example", "oggetto": "Ritardo pagamento", "testo": "Scusate il ritardo sulla fattura di ottobre, possiamo rateizzare in due tranche?", "ricevuta": "2026-11-14"}
-]

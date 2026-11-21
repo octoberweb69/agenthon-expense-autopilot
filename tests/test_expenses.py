@@ -4,7 +4,7 @@ Le regole sono applicate in codice: l'esito non dipende dal modello.
 """
 import pytest
 
-from app.expenses import check_expense_report
+from app.expenses import check_expense_report, list_expense_reports
 
 
 def violations(report: dict) -> dict[str, set[str]]:
@@ -71,3 +71,14 @@ def test_rimborso_km_corretto_e_senza_ricevuta_non_e_anomalia():
 def test_nota_inesistente():
     r = check_expense_report("NS-999")
     assert r["status"] == "error"
+
+
+def test_panoramica_di_tutte_le_note():
+    r = list_expense_reports()
+    assert r["status"] == "ok"
+    esiti = {n["nota_id"]: n["esito"] for n in r["note"]}
+    assert esiti == {"NS-101": "pronta_al_rimborso", "NS-102": "bloccata", "NS-103": "bloccata",
+                     "NS-104": "bloccata", "NS-105": "bloccata", "NS-106": "richiede_approvazione",
+                     "NS-107": "bloccata"}
+    ns106 = next(n for n in r["note"] if n["nota_id"] == "NS-106")
+    assert ns106["dipendente"] == "Elena Russo" and ns106["totale"] == pytest.approx(585.0)

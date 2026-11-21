@@ -1,6 +1,0 @@
-[
-  {"id": "C-01", "ragione_sociale": "Rossi Impianti Srl", "referente": "Marco Rossi", "email": "amministrazione@rossi-impianti.example", "settore": "impiantistica"},
-  {"id": "C-02", "ragione_sociale": "Bianchi Logistica Spa", "referente": "Laura Bianchi", "email": "contabilita@bianchilog.example", "settore": "trasporti"},
-  {"id": "C-03", "ragione_sociale": "Verdi & Figli Snc", "referente": "Paolo Verdi", "email": "paolo@verdiefigli.example", "settore": "commercio"},
-  {"id": "C-04", "ragione_sociale": "Neri Consulting", "referente": "Giulia Neri", "email": "giulia@nericonsulting.example", "settore": "consulenza"}
-]

@@ -1,7 +1,0 @@
-[
-  {"id": "F-2026-101", "cliente": "Rossi Impianti Srl", "importo": 4880.00, "emissione": "2026-09-15", "scadenza": "2026-10-15", "stato": "scaduta"},
-  {"id": "F-2026-102", "cliente": "Bianchi Logistica Spa", "importo": 12200.00, "emissione": "2026-10-01", "scadenza": "2026-10-31", "stato": "pagata"},
-  {"id": "F-2026-103", "cliente": "Verdi & Figli Snc", "importo": 976.00, "emissione": "2026-10-10", "scadenza": "2026-11-09", "stato": "scaduta"},
-  {"id": "F-2026-104", "cliente": "Rossi Impianti Srl", "importo": 2440.00, "emissione": "2026-10-20", "scadenza": "2026-11-19", "stato": "aperta"},
-  {"id": "F-2026-105", "cliente": "Neri Consulting", "importo": 7320.00, "emissione": "2026-11-02", "scadenza": "2026-12-02", "stato": "aperta"}
-]
