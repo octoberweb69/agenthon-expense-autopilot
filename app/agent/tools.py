@@ -82,6 +82,13 @@ def draft_email(to: str, subject: str, body: str) -> dict:
         subject: oggetto breve.
         body: testo della bozza.
     """
+    # Una sola bozza aperta per destinatario: se l'agente riprocessa le note non duplica le email.
+    if OUTBOX.exists():
+        for line in OUTBOX.read_text(encoding="utf-8").splitlines():
+            old = json.loads(line) if line.strip() else {}
+            if old.get("type") == "email_draft" and old.get("to", "").lower() == to.lower():
+                return {"status": "gia_presente", "draft": old,
+                        "message": f"Esiste già una bozza per {to}: non ne creo un'altra."}
     rec = _append_outbox({"type": "email_draft", "to": to, "subject": subject, "body": body})
     return {"status": "ok", "draft": rec}
 

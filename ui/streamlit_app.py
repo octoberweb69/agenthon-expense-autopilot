@@ -48,8 +48,8 @@ def stato_nota(n: dict) -> str:
         return "⛔ Rifiutata"
     if n["approvazione"] == "in_attesa":
         if n["esito"] == "pronta_al_rimborso":
-            return f"🟢 Regolare, attende {n['approvatore']}"
-        return f"🛑 In attesa di {n['approvatore']}"
+            return f"🟢 Regolare → {n['approvatore']}"
+        return f"🛑 Ferma → {n['approvatore']}"
     return {"pronta_al_rimborso": "🟢 Regolare, da approvare",
             "richiede_approvazione": "🟡 Serve approvazione",
             "bloccata": f"🔴 Bloccata ({n['anomalie']} anomalie)"}[n["esito"]]
@@ -240,7 +240,7 @@ with chat_col:
     prompt = st.chat_input("Cosa deve fare l'agente?") or scelto
     if prompt:
         st.session_state.history.append({"role": "user", "content": prompt})
-        with st.spinner("L'agente sta lavorando…"):
+        with chat_box, st.spinner("L'agente sta lavorando…"):  # dentro il riquadro, non sotto lo schermo
             try:
                 r = httpx.post(f"{API}/chat", timeout=180, json={
                     "message": prompt, "session_id": st.session_state.session_id})

@@ -41,3 +41,10 @@ def test_strumenti_dell_agente():
     assert nomi == {"list_datasets", "search_records", "get_record", "list_expense_reports",
                     "check_expense_report", "request_approval", "pay_reimbursement", "read_log",
                     "draft_email"}
+
+
+def test_draft_email_non_duplica_la_stessa_bozza():
+    tools.draft_email("sara.galli@azienda.example", "Taxi del 13/11", "Ci serve la motivazione.")
+    r = tools.draft_email("sara.galli@azienda.example", "Taxi del 13/11", "Testo riscritto.")
+    assert r["status"] == "gia_presente"
+    assert len(tools.OUTBOX.read_text(encoding="utf-8").splitlines()) == 1
