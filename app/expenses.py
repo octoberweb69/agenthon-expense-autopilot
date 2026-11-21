@@ -6,10 +6,13 @@ Modulo puro (niente ADK), così i test girano in pochi secondi.
 """
 import json
 import re
-from datetime import date
+import uuid
+from datetime import date, datetime
 
 from app.config import DATA_DIR
 
+# Registro (audit trail) di richieste, decisioni e pagamenti: una riga JSON per evento.
+REGISTRO = DATA_DIR / "registro.jsonl"
 # Testo nelle spese che prova a dare ordini al sistema: viene segnalato e ignorato.
 _SOSPETTO = re.compile(r"ignora|approvat[ao]|rimbors[ai] subito|senza controlli|nota per il sistema", re.I)
 
@@ -145,3 +148,110 @@ def check_expense_report(nota_id: str) -> dict:
         "regole": {k: v["regola"] for k, v in p.items()},
         "spese": righe,
     }
+
+
+# ---------- REGISTRO, APPROVAZIONI E PAGAMENTO ----------
+
+def _log(tipo: str, nota_id: str, attore: str, **dettagli) -> dict:
+    evento = {"id": uuid.uuid4().hex[:8], "ts": datetime.now().isoformat(timespec="seconds"),
+              "tipo": tipo, "nota_id": nota_id, "attore": attore, **dettagli}
+    REGISTRO.parent.mkdir(parents=True, exist_ok=True)
+    with REGISTRO.open("a", encoding="utf-8") as f:
+        f.write(json.dumps(evento, ensure_ascii=False) + "\n")
+    return evento
+
+
+def read_log(nota_id: str = "") -> list[dict]:
+    """Legge il registro delle azioni (richieste, decisioni, pagamenti, tentativi bloccati).
+
+    Args:
+        nota_id: se indicato, solo gli eventi di quella nota spese.
+    """
+    if not REGISTRO.exists():
+        return []
+    eventi = [json.loads(l) for l in REGISTRO.read_text(encoding="utf-8").splitlines() if l.strip()]
+    return [e for e in eventi if not nota_id or e["nota_id"] == nota_id]
+
+
+def _stato_approvazione(nota_id: str) -> tuple[str, dict | None]:
+    """Ultimo stato: "" (nessuna richiesta), "in_attesa", "approvata" o "rifiutata"."""
+    stato, ultimo = "", None
+    for e in read_log(nota_id):
+        if e["tipo"] == "richiesta_approvazione":
+            stato, ultimo = "in_attesa", e
+        elif e["tipo"] == "approvazione_decisa":
+            stato, ultimo = e["decisione"], e
+    return stato, ultimo
+
+
+def request_approval(nota_id: str, motivo: str) -> dict:
+    """Chiede all'approvatore umano (il responsabile del dipendente) di decidere su una nota
+    spese bloccata o sopra soglia. Non approva nulla: registra la richiesta, che resta in attesa.
+
+    Args:
+        nota_id: id della nota spese, es. "NS-106".
+        motivo: perché serve la decisione (regole violate o soglia superata), in breve.
+    """
+    report = check_expense_report(nota_id)
+    if report["status"] != "ok":
+        return report
+    stato, _ = _stato_approvazione(nota_id)
+    if stato in ("in_attesa", "approvata"):
+        return {"status": stato, "nota_id": nota_id, "approvatore": report["approvatore"],
+                "message": f"Esiste già una richiesta {stato.replace('_', ' ')}."}
+    _log("richiesta_approvazione", nota_id, "agente", motivo=motivo, approvatore=report["approvatore"])
+    return {"status": "in_attesa", "nota_id": nota_id, "approvatore": report["approvatore"]}
+
+
+def decide_approval(nota_id: str, decisione: str, da: str, nota: str = "") -> dict:
+    """Decisione UMANA su una richiesta di approvazione. Non è un tool dell'agente:
+    la chiamano solo la UI e l'API, a nome della persona che decide."""
+    if decisione not in ("approvata", "rifiutata"):
+        return {"status": "error", "message": "La decisione deve essere 'approvata' o 'rifiutata'."}
+    report = check_expense_report(nota_id)
+    if report["status"] != "ok":
+        return report
+    stato, _ = _stato_approvazione(nota_id)
+    if stato != "in_attesa":
+        return {"status": "error", "message": f"Nessuna richiesta in attesa per {nota_id}."}
+    if da != report["approvatore"]:
+        return {"status": "error",
+                "message": f"Solo {report['approvatore']} può decidere su {nota_id}, non {da}."}
+    ev = _log("approvazione_decisa", nota_id, da, decisione=decisione, nota=nota)
+    return {"status": "ok", "decisione": ev}
+
+
+def pay_reimbursement(nota_id: str) -> dict:
+    """Esegue il rimborso di una nota spese (azione irreversibile).
+
+    Il sistema lo consente SOLO se la nota è "pronta_al_rimborso" oppure se l'approvatore umano
+    l'ha approvata; altrimenti rifiuta e registra il tentativo. Non provare ad aggirare un rifiuto:
+    se serve, usa request_approval e aspetta la decisione umana.
+
+    Args:
+        nota_id: id della nota spese, es. "NS-101".
+    """
+    report = check_expense_report(nota_id)
+    if report["status"] != "ok":
+        return report
+
+    def rifiuta(motivo: str) -> dict:
+        _log("pagamento_bloccato", nota_id, "agente", motivo=motivo)
+        return {"status": "rifiutato", "nota_id": nota_id, "motivo": motivo}
+
+    if any(e["tipo"] == "rimborso_pagato" for e in read_log(nota_id)):
+        return rifiuta("Rimborso già pagato per questa nota.")
+
+    stato, ultimo = _stato_approvazione(nota_id)
+    approvato_da = ultimo["attore"] if stato == "approvata" else None
+    if report["esito"] != "pronta_al_rimborso" and not approvato_da:
+        regole = sorted({v["regola"] for s in report["spese"] for v in s["violazioni"]} | set(report["regole_nota"]),
+                        key=lambda r: int(r[1:]))
+        attesa = {"": "nessuna richiesta di approvazione", "in_attesa": "approvazione in attesa",
+                  "rifiutata": "approvazione rifiutata"}[stato]
+        return rifiuta(f"Nota {report['esito'].replace('_', ' ')} (regole: {', '.join(regole)}); "
+                       f"{attesa} da parte di {report['approvatore']}.")
+
+    pagamento = {"importo": report["totale"], "beneficiario": report["dipendente"], "approvato_da": approvato_da}
+    _log("rimborso_pagato", nota_id, "agente", **pagamento)
+    return {"status": "ok", "nota_id": nota_id, "pagamento": pagamento}

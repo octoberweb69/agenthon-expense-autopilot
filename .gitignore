@@ -7,3 +7,4 @@ data/outbox.jsonl
 *.db
 *.log
 pitch/
+data/registro.jsonl

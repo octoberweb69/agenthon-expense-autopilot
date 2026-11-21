@@ -12,7 +12,7 @@ import uuid
 from datetime import datetime
 
 from app.config import DATA_DIR, OUTBOX
-from app.expenses import check_expense_report
+from app.expenses import check_expense_report, pay_reimbursement, read_log, request_approval
 
 
 def _load(name: str) -> list[dict]:
@@ -115,5 +115,7 @@ def request_human_approval(action: str, reason: str) -> dict:
     return {"status": "pending", "approval": rec}
 
 
+# decide_approval NON è qui di proposito: decidere spetta solo a una persona (UI/API).
 ALL_TOOLS = [list_datasets, search_records, get_record, check_expense_report,
+             request_approval, pay_reimbursement, read_log,
              create_ticket, draft_email, request_human_approval]
