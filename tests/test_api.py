@@ -61,3 +61,8 @@ def test_reset_svuota_registro_e_outbox():
 def test_health_mostra_i_modelli():
     h = client.get("/health").json()
     assert h["status"] == "ok" and "model" in h and "pay_reimbursement" in h["tools"]
+
+
+def test_persone_per_il_pannello():
+    nomi = [p["nome"] for p in client.get("/people").json()]
+    assert "Paolo Gatti" in nomi and len(nomi) == 7

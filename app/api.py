@@ -62,6 +62,11 @@ def decide(nota_id: str, body: DecisionIn):
     return r
 
 
+@app.get("/people")
+def people():
+    return [{"id": d["id"], "nome": d["nome"], "ruolo": d["ruolo"]} for d in expenses._load("dipendenti")]
+
+
 @app.get("/log")
 def log():
     return expenses.read_log()
