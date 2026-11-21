@@ -16,8 +16,11 @@ st.markdown("""
 <style>
   .block-container { padding-top: 3rem; padding-bottom: 0.5rem; }
   [data-testid="stMain"] { overflow: hidden; }
-  .st-key-chat_box { height: calc(100vh - 340px) !important; min-height: 200px; }
-  .st-key-pannello { height: calc(100vh - 3.5rem); overflow-y: auto; overflow-x: hidden; padding-right: 0.4rem; }
+  /* il riquadro chat e il suo contenitore hanno altezza fissa da Streamlit: li adatto allo schermo */
+  div:has(> .st-key-chat_box), .st-key-chat_box {
+    height: calc(100vh - 345px) !important; max-height: calc(100vh - 345px) !important;
+    min-height: 180px !important; flex: 0 0 auto !important; }
+  .st-key-pannello { max-height: calc(100vh - 5rem); overflow-y: auto; overflow-x: hidden; padding-right: 0.4rem; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -97,7 +100,7 @@ with side_col.container(key="pannello"):
             m1, m2, m3, m4 = st.columns(4)
             m1.metric("Righe controllate", s["righe_controllate"], help=f"{s['note']} note spese")
             m2.metric("Anomalie trovate", s["anomalie"])
-            m3.metric("Tempo risparmiato", f"~{ore} h {minuti} min",
+            m3.metric("Tempo risparmiato", f"{ore}h {minuti}m",
                       help=f"Stima: {s['minuti_per_riga_stima']} minuti di controllo manuale per riga")
             m4.metric("€ fermati", f"{s['euro_bloccati']:.0f} €",
                       help="Non rimborsabili (alcolici, multe, doppioni, fuori termine) "
@@ -203,8 +206,8 @@ with side_col.container(key="pannello"):
 # ---------- CHAT CON L'AGENTE ----------
 with chat_col:
     st.subheader("🧾 Expense Autopilot")
-    st.caption("Controlla le note spese contro la policy, rimborsa i casi regolari, "
-               "si ferma e chiede a una persona su tutto il resto.")
+    st.caption("Controlla le note spese contro la policy, spiega le eccezioni e prepara i pagamenti: "
+               "niente viene pagato senza l'approvazione di una persona.")
 
     rapidi = ["Processa tutte le note spese da verificare.",
               "Paga le note che sono state approvate.",
