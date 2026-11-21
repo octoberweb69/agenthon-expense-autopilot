@@ -122,14 +122,21 @@ with side_col:
                 chi = c1.selectbox("Decido come", persone, key=f"chi_{n['nota_id']}",
                                    index=persone.index(n["approvatore"]) if n["approvatore"] in persone else 0)
                 motivazione = c2.text_input("Nota (facoltativa)", key=f"nota_{n['nota_id']}")
+                errore = st.session_state.get(f"err_{n['nota_id']}")
+                if errore:
+                    st.error(f"⛔ Rifiutato dal sistema: {errore}")
                 b1, b2 = st.columns(2)
                 for col, decisione, label in ((b1, "approvata", "✅ Approva"), (b2, "rifiutata", "⛔ Rifiuta")):
                     if col.button(label, key=f"{decisione}_{n['nota_id']}", width="stretch"):
                         r = httpx.post(f"{API}/approvals/{n['nota_id']}", timeout=10,
                                        json={"decisione": decisione, "da": chi, "nota": motivazione})
-                        st.session_state.flash = (
-                            ("success", f"{n['nota_id']} {decisione} da {chi}") if r.status_code == 200
-                            else ("error", f"Rifiutato dal sistema: {r.json().get('detail')}"))
+                        if r.status_code == 200:
+                            st.session_state.pop(f"err_{n['nota_id']}", None)
+                            st.session_state.flash = ("success", f"{n['nota_id']} {decisione} da {chi}")
+                            st.toast(f"✅ {n['nota_id']} {decisione} da {chi}")
+                        else:
+                            st.session_state[f"err_{n['nota_id']}"] = r.json().get("detail")
+                            st.toast(f"⛔ {r.json().get('detail')}")
                         st.rerun()
 
     with tab_bozze:
