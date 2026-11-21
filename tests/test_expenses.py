@@ -102,3 +102,12 @@ def test_violazioni_non_sanabili_non_si_chiedono():
     # limiti superati, vino, multe, doppioni, termini scaduti: decide il responsabile, non serve chiedere
     assert check_expense_report("NS-102")["da_chiedere_al_dipendente"] == []
     assert check_expense_report("NS-107")["da_chiedere_al_dipendente"] == []
+
+
+def test_euro_bloccati_per_spesa():
+    # Conta solo cio' che non va rimborsato: importo intero se R6/R7/R8, altrimenti l'eccedenza sui limiti R1/R2.
+    from app.expenses import savings_summary
+    s = savings_summary()
+    per_spesa = {x["spesa"]: x["euro"] for x in s["dettaglio_bloccati"]}
+    assert per_spesa == {"S-06": 40.0, "S-08": 38.0, "S-15": 12.0, "S-16": 42.0, "S-19": 45.0, "S-23": 60.0}
+    assert s["anomalie"] == 11

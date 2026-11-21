@@ -34,8 +34,10 @@ def stato_nota(n: dict) -> str:
     if n["approvazione"] == "rifiutata":
         return "⛔ Rifiutata"
     if n["approvazione"] == "in_attesa":
+        if n["esito"] == "pronta_al_rimborso":
+            return f"🟢 Regolare, attende {n['approvatore']}"
         return f"🛑 In attesa di {n['approvatore']}"
-    return {"pronta_al_rimborso": "🟢 Regolare, da pagare",
+    return {"pronta_al_rimborso": "🟢 Regolare, da approvare",
             "richiede_approvazione": "🟡 Serve approvazione",
             "bloccata": f"🔴 Bloccata ({n['anomalie']} anomalie)"}[n["esito"]]
 
@@ -76,6 +78,21 @@ with side_col:
     attesa = [n for n in note if n["approvazione"] == "in_attesa"]
     bozze = get("/outbox", [])
     registro = get("/log", [])
+
+    # Quanto risparmia: si mostra dopo che l'agente ha processato le note
+    if any(e["tipo"] == "richiesta_approvazione" for e in registro):
+        s = get("/summary", {})
+        if s:
+            ore, minuti = divmod(s["minuti_risparmiati"], 60)
+            m1, m2, m3, m4 = st.columns(4)
+            m1.metric("Righe controllate", s["righe_controllate"], help=f"{s['note']} note spese")
+            m2.metric("Anomalie trovate", s["anomalie"])
+            m3.metric("Tempo risparmiato", f"~{ore} h {minuti} min",
+                      help=f"Stima: {s['minuti_per_riga_stima']} minuti di controllo manuale per riga")
+            m4.metric("€ fermati", f"{s['euro_bloccati']:.0f} €",
+                      help="Non rimborsabili (alcolici, multe, doppioni, fuori termine) "
+                           "+ eccedenze sui limiti di pasti e hotel")
+
     tab_note, tab_appr, tab_bozze, tab_log = st.tabs([
         "📋 Note spese", f"🛑 Approvazioni ({len(attesa)})", f"✉️ Bozze ({len(bozze)})",
         f"📜 Registro ({len(registro)})"])
@@ -118,6 +135,8 @@ with side_col:
             with st.container(border=True):
                 st.markdown(f"**{n['nota_id']}** · {n['dipendente']} · {n['totale']:.2f} € · "
                             f"decide **{n['approvatore']}**")
+                if n["esito"] == "pronta_al_rimborso":
+                    st.success("Regolare: tutti i controlli superati, nessuna anomalia.", icon="🟢")
                 st.caption(f"Motivo dell'agente: {richiesta.get('motivo', '-')}")
                 for s in d.get("spese", []):
                     for v in s["violazioni"]:

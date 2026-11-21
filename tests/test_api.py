@@ -47,12 +47,23 @@ def test_decisione_della_persona_sbagliata_rifiutata():
 
 
 def test_registro_completo():
+    expenses.request_approval("NS-101", "Regolare")
+    client.post("/approvals/NS-101", json={"decisione": "approvata", "da": "Elena Russo"})
     expenses.pay_reimbursement("NS-101")
-    assert [e["tipo"] for e in client.get("/log").json()] == ["rimborso_pagato"]
+    assert [(e["tipo"], e["attore"]) for e in client.get("/log").json()] == [
+        ("richiesta_approvazione", "agente"), ("approvazione_decisa", "Elena Russo"),
+        ("rimborso_pagato", "agente")]
+
+
+def test_riepilogo_del_risparmio():
+    s = client.get("/summary").json()
+    assert s["righe_controllate"] == 23 and s["note"] == 7
+    assert s["minuti_risparmiati"] == 23 * 6
+    assert s["euro_bloccati"] == pytest.approx(237.0)
 
 
 def test_reset_svuota_registro_e_outbox():
-    expenses.pay_reimbursement("NS-101")
+    expenses.request_approval("NS-101", "Regolare")
     tools.draft_email("a@azienda.example", "Oggetto", "Testo")
     assert client.post("/reset").status_code == 200
     assert client.get("/log").json() == [] and client.get("/outbox").json() == []

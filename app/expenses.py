@@ -200,8 +200,9 @@ def _stato_approvazione(nota_id: str) -> tuple[str, dict | None]:
 
 
 def request_approval(nota_id: str, motivo: str) -> dict:
-    """Chiede all'approvatore umano (il responsabile del dipendente) di decidere su una nota
-    spese bloccata o sopra soglia. Non approva nulla: registra la richiesta, che resta in attesa.
+    """Chiede all'approvatore umano (il responsabile del dipendente) di decidere su una nota spese.
+    Serve per OGNI nota da pagare: per le regolari è un'approvazione rapida ("tutto controllato"),
+    per quelle bloccate o sopra soglia va spiegato il motivo. Non approva nulla: la richiesta resta in attesa.
 
     Args:
         nota_id: id della nota spese, es. "NS-106".
@@ -239,8 +240,8 @@ def decide_approval(nota_id: str, decisione: str, da: str, nota: str = "") -> di
 def pay_reimbursement(nota_id: str) -> dict:
     """Esegue il rimborso di una nota spese (azione irreversibile).
 
-    Il sistema lo consente SOLO se la nota è "pronta_al_rimborso" oppure se l'approvatore umano
-    l'ha approvata; altrimenti rifiuta e registra il tentativo. Non provare ad aggirare un rifiuto:
+    Il sistema lo consente SOLO se l'approvatore umano l'ha approvata, anche quando la nota è
+    regolare; altrimenti rifiuta e registra il tentativo. Non provare ad aggirare un rifiuto:
     se serve, usa request_approval e aspetta la decisione umana.
 
     Args:
@@ -259,12 +260,14 @@ def pay_reimbursement(nota_id: str) -> dict:
 
     stato, ultimo = _stato_approvazione(nota_id)
     approvato_da = ultimo["attore"] if stato == "approvata" else None
-    if report["esito"] != "pronta_al_rimborso" and not approvato_da:
+    # Nessun pagamento senza una persona: vale anche per le note regolari (azione irreversibile).
+    if not approvato_da:
         regole = sorted({v["regola"] for s in report["spese"] for v in s["violazioni"]} | set(report["regole_nota"]),
                         key=lambda r: int(r[1:]))
         attesa = {"": "nessuna richiesta di approvazione", "in_attesa": "approvazione in attesa",
                   "rifiutata": "approvazione rifiutata"}[stato]
-        return rifiuta(f"Nota {report['esito'].replace('_', ' ')} (regole: {', '.join(regole)}); "
+        dettaglio = f" (regole: {', '.join(regole)})" if regole else ""
+        return rifiuta(f"Nota {report['esito'].replace('_', ' ')}{dettaglio}; "
                        f"{attesa} da parte di {report['approvatore']}.")
 
     pagamento = {"importo": report["totale"], "beneficiario": report["dipendente"], "approvato_da": approvato_da}
@@ -285,3 +288,39 @@ def list_expense_reports() -> dict:
                      "approvazione": stato or None,
                      "pagata": any(e["tipo"] == "rimborso_pagato" for e in read_log(n["id"]))})
     return {"status": "ok", "note": note}
+
+
+# ---------- QUANTO RISPARMIA ----------
+
+MINUTI_PER_RIGA = 6  # stima del controllo manuale di una riga di spesa
+_NON_RIMBORSABILI = {"R6", "R7", "R8"}  # spese da non rimborsare per intero
+
+
+def savings_summary() -> dict:
+    """Numeri per la demo: righe controllate, anomalie, tempo risparmiato (stima) e euro che non
+    andavano rimborsati (importo intero per R6/R7/R8, eccedenza sui limiti per R1/R2)."""
+    p = _policy()
+    righe, anomalie, bloccati = 0, 0, []
+    for n in _load("note_spese"):
+        for s in check_expense_report(n["id"])["spese"]:
+            righe += 1
+            anomalie += len(s["violazioni"])
+            regole = {v["regola"] for v in s["violazioni"]}
+            imp = float(s["importo"])
+            if regole & _NON_RIMBORSABILI:
+                euro = imp
+            else:
+                spesa = next(x for x in _load("spese") if x["id"] == s["id"])
+                euro = 0.0
+                if "R1" in regole:
+                    persone = max(int(spesa.get("persone", 1)), 1)
+                    lim = p["R1"]["max_persona_cliente"] if spesa.get("cliente") else p["R1"]["max_persona"]
+                    euro += imp - lim * persone
+                if "R2" in regole:
+                    euro += imp - p["R2"]["max_notte"] * max(int(spesa.get("notti", 1)), 1)
+                euro = min(round(euro, 2), imp)
+            if euro > 0:
+                bloccati.append({"spesa": s["id"], "euro": round(euro, 2)})
+    return {"note": len(_load("note_spese")), "righe_controllate": righe, "anomalie": anomalie,
+            "minuti_risparmiati": righe * MINUTI_PER_RIGA, "minuti_per_riga_stima": MINUTI_PER_RIGA,
+            "euro_bloccati": round(sum(b["euro"] for b in bloccati), 2), "dettaglio_bloccati": bloccati}

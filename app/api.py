@@ -62,6 +62,11 @@ def decide(nota_id: str, body: DecisionIn):
     return r
 
 
+@app.get("/summary")
+def summary():
+    return expenses.savings_summary()
+
+
 @app.get("/people")
 def people():
     return [{"id": d["id"], "nome": d["nome"], "ruolo": d["ruolo"]} for d in expenses._load("dipendenti")]

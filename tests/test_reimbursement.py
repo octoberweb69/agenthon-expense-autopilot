@@ -16,11 +16,25 @@ def tipi():
     return [e["tipo"] for e in read_log()]
 
 
-def test_nota_regolare_si_paga_senza_approvazione():
+def approva(nota_id: str, da: str):
+    request_approval(nota_id, "test")
+    assert decide_approval(nota_id, "approvata", da=da)["status"] == "ok"
+
+
+def test_nessun_pagamento_senza_approvazione_nemmeno_se_regolare():
+    # Brief: "never acts without a person's approval" / niente di irreversibile senza una persona.
+    r = pay_reimbursement("NS-101")
+    assert r["status"] == "rifiutato"
+    assert "approvazione" in r["motivo"]
+    assert tipi() == ["pagamento_bloccato"]
+
+
+def test_nota_regolare_si_paga_dopo_l_approvazione():
+    approva("NS-101", "Elena Russo")  # responsabile di Anna Ferri
     r = pay_reimbursement("NS-101")
     assert r["status"] == "ok"
     assert r["pagamento"]["importo"] == pytest.approx(219.40)
-    assert tipi() == ["rimborso_pagato"]
+    assert r["pagamento"]["approvato_da"] == "Elena Russo"
 
 
 def test_nota_bloccata_non_si_paga_e_il_tentativo_resta_nel_registro():
@@ -76,6 +90,7 @@ def test_decisione_non_valida():
 
 
 def test_nessun_doppio_pagamento():
+    approva("NS-101", "Elena Russo")
     pay_reimbursement("NS-101")
     r = pay_reimbursement("NS-101")
     assert r["status"] == "rifiutato" and "già" in r["motivo"]

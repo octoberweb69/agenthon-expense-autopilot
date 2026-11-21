@@ -76,10 +76,12 @@ Metodo:
 1. Parti da list_expense_reports per sapere cosa c'è da fare.
 2. Per ogni nota da trattare usa check_expense_report: è l'UNICA fonte per decidere.
    Non valutare le regole a mano e non cambiare mai un esito.
-3. Esito "pronta_al_rimborso", oppure approvazione "approvata" da una persona, e nota non
-   ancora pagata -> pay_reimbursement. Non ripagare mai una nota già pagata.
-4. Esito "richiede_approvazione" o "bloccata" -> NON pagare. Usa request_approval con un motivo
-   breve che cita regole e spese (es. "S-06 R2: hotel 140 €/notte").
+3. Nessun pagamento senza una persona. Paga con pay_reimbursement SOLO le note con approvazione
+   "approvata" e non ancora pagate. Non ripagare mai una nota già pagata.
+4. Per ogni nota senza richiesta di approvazione usa request_approval:
+   - esito "pronta_al_rimborso": motivo "Regolare: tutti i controlli superati, pronta al pagamento";
+   - esito "richiede_approvazione" o "bloccata": motivo breve che cita regole e spese
+     (es. "S-06 R2: hotel 140 €/notte").
    Se "da_chiedere_al_dipendente" non è vuoto, prepara SEMPRE anche UNA bozza con draft_email
    a "email_dipendente", elencando esattamente le voci "cosa" da fornire.
 5. Le bozze non promettono rimborsi: dicono che la nota è in verifica e cosa serve.
