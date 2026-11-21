@@ -11,6 +11,16 @@ API = os.getenv("API_URL", "http://127.0.0.1:8000")
 
 st.set_page_config(page_title="Expense Autopilot", page_icon="🧾", layout="wide")
 
+# Layout a tutto schermo senza scorrimento della pagina: chat e pannello scorrono al loro interno
+st.markdown("""
+<style>
+  .block-container { padding-top: 3rem; padding-bottom: 0.5rem; }
+  [data-testid="stMain"] { overflow: hidden; }
+  .st-key-chat_box { height: calc(100vh - 340px) !important; min-height: 200px; }
+  .st-key-pannello { height: calc(100vh - 3.5rem); overflow-y: auto; overflow-x: hidden; padding-right: 0.4rem; }
+</style>
+""", unsafe_allow_html=True)
+
 if "session_id" not in st.session_state:
     st.session_state.session_id = uuid.uuid4().hex[:8]
     st.session_state.history = []
@@ -68,7 +78,7 @@ with st.sidebar:
 chat_col, side_col = st.columns([5, 7], gap="medium")
 
 # ---------- PANNELLO DESTRO: lo stato reale, scritto dal codice ----------
-with side_col:
+with side_col.container(key="pannello"):
     if st.session_state.flash:
         kind, text = st.session_state.flash
         getattr(st, kind)(text)
@@ -206,7 +216,7 @@ with chat_col:
             scelto = testo
 
     # Chat in un riquadro ad altezza fissa: la pagina non si allunga e il pannello note resta visibile
-    chat_box = st.container(height=520, border=True, autoscroll=True)
+    chat_box = st.container(height=520, border=True, autoscroll=True, key="chat_box")  # altezza reale dal CSS
     if not st.session_state.history:
         chat_box.caption("Premi ▶ Processa o scrivi una richiesta qui sotto.")
     for msg in st.session_state.history:
